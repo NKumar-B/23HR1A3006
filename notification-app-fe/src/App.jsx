@@ -1,36 +1,3 @@
-// import { useEffect } from "react";
-// import { getNotifications } from "./api/notifications";
-
-// function App() {
-
-//     useEffect(() => {
-
-//         async function load() {
-
-//             try {
-
-//                 const data = await getNotifications();
-
-//                 alert(`Received ${data.length} notifications`);
-
-//             } catch {
-
-//                 alert("API Error");
-//             }
-
-//         }
-
-//         load();
-
-//     }, []);
-
-//     return (
-//         <h1>Notification App</h1>
-//     );
-// }
-
-// export default App;
-
 import {
   AppBar,
   Box,
