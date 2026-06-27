@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+
 import {
   Alert,
   Badge,
@@ -9,11 +10,12 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+
 import NotificationsIcon from "@mui/icons-material/Notifications";
 
-import { NotificationCard } from "../components/NotificationCard";
 import NotificationFilter from "../components/NotificationFilter";
-import useNotifications  from "../hooks/useNotifications";
+import { NotificationCard } from "../components/NotificationCard";
+import useNotifications from "../hooks/useNotifications";
 
 import { Log } from "../../../logging-middleware";
 
@@ -29,43 +31,75 @@ export function NotificationsPage() {
     error,
   } = useNotifications(page, filter);
 
-  useEffect(() => {
-
-    Log(
-      "frontend",
-      "info",
-      "page",
-      "Notifications page loaded"
-    );
-
-  }, []);
-
   const unreadCount = notifications.length;
 
-  async function handleFilterChange(newFilter) {
+  const priorityNotifications = useMemo(() => {
 
-    setFilter(newFilter);
+    const priorityWeight = {
+
+      Placement: 3,
+
+      Result: 2,
+
+      Event: 1,
+
+    };
+
+    return [...notifications].sort((a, b) => {
+
+      const priorityDiff =
+        (priorityWeight[b.Type] || 0) -
+        (priorityWeight[a.Type] || 0);
+
+      if (priorityDiff !== 0) {
+
+        return priorityDiff;
+
+      }
+
+      return (
+        new Date(b.Timestamp) -
+        new Date(a.Timestamp)
+      );
+
+    });
+
+  }, [notifications]);
+
+  async function handleFilterChange(value) {
+
+    setFilter(value);
 
     setPage(1);
 
     await Log(
+
       "frontend",
+
       "info",
+
       "component",
-      `Filter changed to ${newFilter || "All"}`
+
+      `Notification filter changed to ${value || "All"}`
+
     );
 
   }
 
-  async function handlePageChange(event, newPage) {
+  async function handlePageChange(event, value) {
 
-    setPage(newPage);
+    setPage(value);
 
     await Log(
+
       "frontend",
+
       "info",
+
       "component",
-      `Moved to page ${newPage}`
+
+      `Moved to page ${value}`
+
     );
 
   }
@@ -73,36 +107,57 @@ export function NotificationsPage() {
   return (
 
     <Box
+
       sx={{
-        maxWidth: 750,
+
+        maxWidth: 850,
+
         mx: "auto",
+
         px: 2,
+
         py: 4,
+
       }}
+
     >
 
       <Stack
+
         direction="row"
-        alignItems="center"
+
         spacing={2}
+
+        alignItems="center"
+
         mb={3}
+
       >
 
         <Badge
+
           badgeContent={unreadCount}
+
           color="primary"
+
           max={99}
+
         >
 
           <NotificationsIcon
-            sx={{ fontSize: 30 }}
+
+            sx={{ fontSize: 32 }}
+
           />
 
         </Badge>
 
         <Typography
+
           variant="h4"
-          fontWeight={700}
+
+          fontWeight="bold"
+
         >
 
           Campus Notifications
@@ -113,24 +168,28 @@ export function NotificationsPage() {
 
       <Divider sx={{ mb: 3 }} />
 
-      <Box mb={3}>
+      <NotificationFilter
 
-        <NotificationFilter
+        value={filter}
 
-          value={filter}
+        onChange={handleFilterChange}
 
-          onChange={handleFilterChange}
-
-        />
-
-      </Box>
+      />
 
       {loading && (
 
         <Box
-          display="flex"
-          justifyContent="center"
-          py={6}
+
+          sx={{
+
+            display: "flex",
+
+            justifyContent: "center",
+
+            py: 6,
+
+          }}
+
         >
 
           <CircularProgress />
@@ -143,15 +202,17 @@ export function NotificationsPage() {
 
         <Alert severity="error">
 
-          Failed to load notifications
+          {error || "Failed to load notifications."}
 
         </Alert>
 
       )}
 
       {!loading &&
+
         !error &&
-        notifications.length === 0 && (
+
+        priorityNotifications.length === 0 && (
 
           <Alert severity="info">
 
@@ -162,12 +223,14 @@ export function NotificationsPage() {
         )}
 
       {!loading &&
+
         !error &&
-        notifications.length > 0 && (
+
+        priorityNotifications.length > 0 && (
 
           <Stack spacing={2}>
 
-            {notifications.map((notification) => (
+            {priorityNotifications.map((notification) => (
 
               <NotificationCard
 
@@ -183,32 +246,43 @@ export function NotificationsPage() {
 
         )}
 
-      {!loading &&
-        totalPages > 1 && (
+      {!loading && totalPages > 1 && (
 
-          <Box
-            display="flex"
-            justifyContent="center"
-            mt={4}
-          >
+        <Box
 
-            <Pagination
+          sx={{
 
-              page={page}
+            display: "flex",
 
-              count={totalPages}
+            justifyContent: "center",
 
-              color="primary"
+            mt: 4,
 
-              shape="rounded"
+          }}
 
-              onChange={handlePageChange}
+        >
 
-            />
+          <Pagination
 
-          </Box>
+            page={page}
 
-        )}
+            count={totalPages}
+
+            color="primary"
+
+            shape="rounded"
+
+            showFirstButton
+
+            showLastButton
+
+            onChange={handlePageChange}
+
+          />
+
+        </Box>
+
+      )}
 
     </Box>
 
