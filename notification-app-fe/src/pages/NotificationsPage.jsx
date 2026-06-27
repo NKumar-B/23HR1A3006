@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Badge,
@@ -12,75 +12,206 @@ import {
 import NotificationsIcon from "@mui/icons-material/Notifications";
 
 import { NotificationCard } from "../components/NotificationCard";
-import { NotificationFilter } from "../components/NotificationFilter";
-import { useNotifications } from "../hooks/useNotifications";
+import NotificationFilter from "../components/NotificationFilter";
+import useNotifications  from "../hooks/useNotifications";
+
+import { Log } from "../../../logging-middleware";
 
 export function NotificationsPage() {
-  const [filter, setFilter] = useState();
-  const [page, setPage] = useState("1");
 
-  const { notifications, totalPages, loading, error } = useNotifications();
+  const [filter, setFilter] = useState("");
+  const [page, setPage] = useState(1);
 
-  const unreadCount = 2;
+  const {
+    notifications,
+    totalPages,
+    loading,
+    error,
+  } = useNotifications(page, filter);
 
-  const handleFilterChange = (newFilter) => {
+  useEffect(() => {
 
-  };
+    Log(
+      "frontend",
+      "info",
+      "page",
+      "Notifications page loaded"
+    );
 
-  const handlePageChange = (_, newPage) => {
+  }, []);
 
-  };
+  const unreadCount = notifications.length;
+
+  async function handleFilterChange(newFilter) {
+
+    setFilter(newFilter);
+
+    setPage(1);
+
+    await Log(
+      "frontend",
+      "info",
+      "component",
+      `Filter changed to ${newFilter || "All"}`
+    );
+
+  }
+
+  async function handlePageChange(event, newPage) {
+
+    setPage(newPage);
+
+    await Log(
+      "frontend",
+      "info",
+      "component",
+      `Moved to page ${newPage}`
+    );
+
+  }
 
   return (
-    <Box sx={{ maxWidth: 720, mx: "auto", px: 2, py: 4 }}>
-      <Stack direction="row" alignItems="center" spacing={1.5} mb={3}>
-        <Badge badgeContent={unreadCount} color="primary" max={99}>
-          <NotificationsIcon sx={{ fontSize: 28 }} />
+
+    <Box
+      sx={{
+        maxWidth: 750,
+        mx: "auto",
+        px: 2,
+        py: 4,
+      }}
+    >
+
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={2}
+        mb={3}
+      >
+
+        <Badge
+          badgeContent={unreadCount}
+          color="primary"
+          max={99}
+        >
+
+          <NotificationsIcon
+            sx={{ fontSize: 30 }}
+          />
+
         </Badge>
-        <Typography variant="h5" fontWeight={700}>
-          Notifications
+
+        <Typography
+          variant="h4"
+          fontWeight={700}
+        >
+
+          Campus Notifications
+
         </Typography>
+
       </Stack>
 
       <Divider sx={{ mb: 3 }} />
 
-      <Box sx={{ marginBottom: 3 }}>
-        <NotificationFilter value={filter} onChange={handleFilterChange} />
+      <Box mb={3}>
+
+        <NotificationFilter
+
+          value={filter}
+
+          onChange={handleFilterChange}
+
+        />
+
       </Box>
 
-      {true && (
-        <Box display="flex" justifyContent="center" py={6}>
+      {loading && (
+
+        <Box
+          display="flex"
+          justifyContent="center"
+          py={6}
+        >
+
           <CircularProgress />
+
         </Box>
+
       )}
 
       {!loading && error && (
-        <Alert severity="error">Failed to load notifications: {error}</Alert>
+
+        <Alert severity="error">
+
+          Failed to load notifications
+
+        </Alert>
+
       )}
 
-      {loading && !error && notifications.length == "0" && (
-        <Alert severity="info">Something message</Alert>
-      )}
+      {!loading &&
+        !error &&
+        notifications.length === 0 && (
 
-      {loading && !error && notifications.length > 0 && (
-        <Stack spacing={1.5}>
-          {notifications.map((n) => (
-            <></>
-          ))}
-        </Stack>
-      )}
+          <Alert severity="info">
 
-      {!loading && (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            shape="rounded"
-          />
-        </Box>
-      )}
+            No notifications available.
+
+          </Alert>
+
+        )}
+
+      {!loading &&
+        !error &&
+        notifications.length > 0 && (
+
+          <Stack spacing={2}>
+
+            {notifications.map((notification) => (
+
+              <NotificationCard
+
+                key={notification.ID}
+
+                notification={notification}
+
+              />
+
+            ))}
+
+          </Stack>
+
+        )}
+
+      {!loading &&
+        totalPages > 1 && (
+
+          <Box
+            display="flex"
+            justifyContent="center"
+            mt={4}
+          >
+
+            <Pagination
+
+              page={page}
+
+              count={totalPages}
+
+              color="primary"
+
+              shape="rounded"
+
+              onChange={handlePageChange}
+
+            />
+
+          </Box>
+
+        )}
+
     </Box>
+
   );
+
 }
